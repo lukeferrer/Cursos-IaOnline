@@ -1,0 +1,2578 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acadèmia Digital Sènior - Sistema de Gestió Professional</title>
+    <script src="https://cdn.tailwindcss.com">
+// === Funcions d'eliminació ===
+
+// Eliminar estudiant
+function deleteStudent(studentId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest estudiant?")) {
+        students = students.filter(s => s.id !== studentId);
+        renderStudents();
+        showNotification("Estudiant eliminat correctament", "success");
+    }
+}
+
+// Eliminar curs
+function deleteCourse(courseId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest curs?")) {
+        courses = courses.filter(c => c.id !== courseId);
+        renderCourses();
+        showNotification("Curs eliminat correctament", "success");
+    }
+}
+
+// Eliminar professor
+function deleteProfessor(professorId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest professor?")) {
+        professors = professors.filter(p => p.id !== professorId);
+        renderProfessors();
+        showNotification("Professor eliminat correctament", "success");
+    }
+}
+
+// Eliminar grup
+function deleteGroup(groupId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest grup?")) {
+        groups = groups.filter(g => g.id !== groupId);
+        renderGroups();
+        showNotification("Grup eliminat correctament", "success");
+    }
+}
+
+// Eliminar tasca (admin o professor creador)
+function deleteTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
+    if (confirm("Segur que vols eliminar aquesta tasca?")) {
+        tasks = tasks.filter(t => t.id !== taskId);
+        renderProfessorGroups();
+        showNotification("Tasca eliminada correctament", "success");
+    }
+}
+
+// Eliminar avaluació
+function deleteEvaluation(evaluationIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
+        evaluations.splice(evaluationIndex, 1);
+        renderEvaluations();
+        showNotification("Avaluació eliminada correctament", "success");
+    }
+}
+
+// Eliminar pagament
+function deletePayment(paymentIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest pagament?")) {
+        payments.splice(paymentIndex, 1);
+        renderPayments();
+        showNotification("Pagament eliminat correctament", "success");
+    }
+}
+
+</script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success { background-color: #10b981; }
+        .notification.error { background-color: #ef4444; }
+        .notification.warning { background-color: #f59e0b; }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg border-b-4 border-indigo-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <span class="text-white text-xl font-bold">🤖</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Acadèmia Digital Sènior</h1>
+                        <p class="text-sm text-gray-600">Formació Tecnològica per a Gent Gran</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm text-gray-600">📅 <span id="currentDate"></span></div>
+                        <div class="text-xs text-gray-500">⏰ <span id="currentTime"></span></div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900" id="currentUserName"></div>
+                            <div class="text-xs text-gray-500" id="currentUserType"></div>
+                        </div>
+                        <button onclick="exportAllData()" id="exportBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">
+                            📊 Exportar
+                        </button>
+                        <button onclick="userManager.logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
+                            🚪 Sortir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-3xl">👨‍🏫</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Benvingut/da</h2>
+                <p class="text-gray-600">Accedeix al sistema de gestió</p>
+            </div>
+            
+            <form onsubmit="userManager.login(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correu electrònic</label>
+                    <input type="email" id="userEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="exemple@correu.com">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contrasenya</label>
+                    <input type="password" id="userPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Introdueix la contrasenya">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipus d'usuari</label>
+                    <select id="userType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="professor">👨‍🏫 Professor</option>
+                        <option value="estudiant">👩‍🎓 Estudiant</option>
+                        <option value="admin">👑 Administrador</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-indigo-600 hover:to-purple-700 transition-all">
+                    Entrar al Sistema
+                </button>
+            </form>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Estudiants</p>
+                            <p class="text-3xl font-bold text-indigo-600" id="totalStudents">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">👥</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Cursos Actius</p>
+                            <p class="text-3xl font-bold text-green-600" id="activeCourses">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">📚</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Classes Avui</p>
+                            <p class="text-3xl font-bold text-orange-600" id="todayClasses">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">📅</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Satisfacció</p>
+                            <p class="text-3xl font-bold text-purple-600" id="satisfaction">95%</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="bg-white rounded-xl shadow-lg mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6">
+                        <button onclick="showTab('students')" class="tab-btn py-4 px-2 border-b-2 border-indigo-500 text-indigo-600 font-medium">
+                            👥 Estudiants
+                        </button>
+                        <button onclick="showTab('courses')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                            📚 Cursos
+                        </button>
+                        <button onclick="showTab('schedule')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                            📅 Horaris
+                        </button>
+                        <button onclick="showTab('progress')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                            📊 Progrés
+                        </button>
+                        <button onclick="showTab('groups')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="groupsTabBtn" style="display: none;">
+                            👥 Els meus Grups
+                        </button>
+                        <button onclick="showTab('attendance')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="attendanceTabBtn">
+                            ✅ Assistència
+                        </button>
+                        <button onclick="showTab('professors')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="professorsTabBtn">
+                            👨‍🏫 Professors
+                        </button>
+                        <button onclick="showTab('evaluations')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="evaluationsTabBtn">
+                            📝 Avaluacions
+                        </button>
+                        <button onclick="showTab('payments')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="paymentsTabBtn">
+                            💰 Pagaments
+                        </button>
+                        <button onclick="showTab('adminGroups')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="adminGroupsTabBtn" style="display: none;">
+                            👥 Gestió Grups
+                        </button>
+                        <button onclick="showTab('dashboard')" class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium" id="studentDashboardBtn" style="display: none;">
+                            🏠 El meu Taulell
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Students Tab -->
+                <div id="studentsTab" class="tab-content p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Gestió d'Estudiants</h3>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <input type="text" id="studentSearch" placeholder="Buscar estudiant..." 
+                                       onkeyup="searchStudents()" 
+                                       class="px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-400">🔍</span>
+                                </div>
+                            </div>
+                            <button onclick="showAddStudentModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+                                ➕ Afegir Estudiant
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Edat</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nivell</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Curs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progrés</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Students will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Courses Tab -->
+                <div id="coursesTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Gestió de Cursos</h3>
+                        <button onclick="showAddCourseModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Crear Curs
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="coursesGrid">
+                        <!-- Courses will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Schedule Tab -->
+                <div id="scheduleTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Horaris de Classes</h3>
+                        <button onclick="showAddClassModal()" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Programar Classe
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg border">
+                        <div class="grid grid-cols-8 gap-0">
+                            <div class="p-4 bg-gray-50 font-medium text-center">Hora</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Dilluns</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Dimarts</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Dimecres</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Dijous</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Divendres</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Dissabte</div>
+                            <div class="p-4 bg-gray-50 font-medium text-center">Diumenge</div>
+                        </div>
+                        <div id="scheduleGrid">
+                            <!-- Schedule will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Tab -->
+                <div id="progressTab" class="tab-content p-6 hidden">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Seguiment del Progrés</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">Progrés per Curs</h4>
+                            <div id="courseProgressList">
+                                <!-- Course progress will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">Estudiants Destacats</h4>
+                            <div id="topStudentsList">
+                                <!-- Top students will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Groups Tab (for professors) -->
+                <div id="groupsTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Els meus Grups</h3>
+                        <button onclick="showAddTaskModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Nova Tasca
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- My Groups -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">Els meus Estudiants</h4>
+                            <div id="myStudentsList">
+                                <!-- Students will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Tasks -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">Tasques Publicades</h4>
+                            <div id="tasksList">
+                                <!-- Tasks will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Dashboard Tab -->
+                <div id="dashboardTab" class="tab-content p-6 hidden">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">El meu Taulell</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- My Course Info -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">El meu Curs</h4>
+                            <div id="myCourseInfo">
+                                <!-- Course info will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- My Progress -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">El meu Progrés</h4>
+                            <div id="myProgressInfo">
+                                <!-- Progress info will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- My Tasks -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">Les meves Tasques</h4>
+                            <div id="myTasksList">
+                                <!-- Tasks will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- My Attendance -->
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4">La meva Assistència</h4>
+                            <div id="myAttendanceInfo">
+                                <!-- Attendance info will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professors Tab -->
+                <div id="professorsTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Gestió de Professors</h3>
+                        <button onclick="showAddProfessorModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Afegir Professor
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Professor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correu</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Curs Assignat</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiants</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="professorsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Professors will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Attendance Tab -->
+                <div id="attendanceTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Control d'Assistència</h3>
+                        <div class="flex space-x-3">
+                            <select id="attendanceClassFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Totes les classes</option>
+                            </select>
+                            <button onclick="showTodayAttendance()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                                📅 Classe d'Avui
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Today's Class Attendance -->
+                    <div id="todayAttendanceSection" class="bg-white rounded-lg border p-6 mb-6 hidden">
+                        <h4 class="text-lg font-semibold mb-4">Assistència d'Avui</h4>
+                        <div id="todayAttendanceList">
+                            <!-- Today's attendance will be populated here -->
+                        </div>
+                        <div class="mt-4 flex space-x-3">
+                            <button onclick="saveAttendance()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                                💾 Guardar Assistència
+                            </button>
+                            <button onclick="cancelAttendance()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">
+                                ❌ Cancel·lar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance History -->
+                    <div class="bg-white rounded-lg border overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assistència</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Attendance will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Evaluations Tab -->
+                <div id="evaluationsTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Avaluacions i Notes</h3>
+                        <button onclick="showAddEvaluationModal()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Nova Avaluació
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg border overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipus</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nota</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comentaris</th>
+                                </tr>
+                            </thead>
+                            <tbody id="evaluationsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Evaluations will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Payments Tab -->
+                <div id="paymentsTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Gestió de Pagaments</h3>
+                        <button onclick="showAddPaymentModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Registrar Pagament
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-green-800">Ingressos Totals</h4>
+                            <p class="text-2xl font-bold text-green-600" id="totalRevenue">0€</p>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800">Pagaments Pendents</h4>
+                            <p class="text-2xl font-bold text-blue-600" id="pendingPayments">0€</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800">Aquest Mes</h4>
+                            <p class="text-2xl font-bold text-purple-600" id="monthlyRevenue">0€</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg border overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estudiant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Import</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mètode</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Payments will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Groups Tab -->
+                <div id="adminGroupsTab" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Gestió de Grups</h3>
+                        <button onclick="showAddGroupModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                            ➕ Crear Grup
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="groupsGrid">
+                        <!-- Groups will be populated here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Afegir Nou Estudiant</h3>
+                <button onclick="closeModal('addStudentModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addStudent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+                    <input type="text" id="studentName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Edat</label>
+                    <input type="number" id="studentAge" min="50" max="100" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Telèfon</label>
+                    <input type="tel" id="studentPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correu electrònic</label>
+                    <input type="email" id="studentEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contrasenya</label>
+                    <input type="password" id="studentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nivell</label>
+                    <select id="studentLevel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="principiant">Principiant</option>
+                        <option value="intermig">Intermig</option>
+                        <option value="avançat">Avançat</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Curs</label>
+                    <select id="studentCourse" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Selecciona un curs</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addStudentModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Afegir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div id="addCourseModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Crear Nou Curs</h3>
+                <button onclick="closeModal('addCourseModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addCourse(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom del curs</label>
+                    <input type="text" id="courseName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripció</label>
+                    <textarea id="courseDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Durada (setmanes)</label>
+                    <input type="number" id="courseDuration" min="1" max="52" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nivell</label>
+                    <select id="courseLevel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="principiant">Principiant</option>
+                        <option value="intermig">Intermig</option>
+                        <option value="avançat">Avançat</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Preu (€)</label>
+                    <input type="number" id="coursePrice" min="0" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addCourseModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Crear
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div id="addClassModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Programar Nova Classe</h3>
+                <button onclick="closeModal('addClassModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addClass(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Curs</label>
+                    <select id="classCourse" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="">Selecciona un curs</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dia de la setmana</label>
+                    <select id="classDay" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="1">Dilluns</option>
+                        <option value="2">Dimarts</option>
+                        <option value="3">Dimecres</option>
+                        <option value="4">Dijous</option>
+                        <option value="5">Divendres</option>
+                        <option value="6">Dissabte</option>
+                        <option value="0">Diumenge</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora d'inici</label>
+                    <input type="time" id="classTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Durada (minuts)</label>
+                    <select id="classDuration" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                        <option value="60">60 minuts</option>
+                        <option value="90">90 minuts</option>
+                        <option value="120">120 minuts</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addClassModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                        Programar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Professor Modal -->
+    <div id="addProfessorModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Afegir Nou Professor</h3>
+                <button onclick="closeModal('addProfessorModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addProfessor(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+                    <input type="text" id="professorName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correu electrònic</label>
+                    <input type="email" id="professorEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contrasenya</label>
+                    <input type="password" id="professorPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Curs assignat</label>
+                    <select id="professorCourse" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Selecciona un curs</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addProfessorModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Afegir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Nova Tasca</h3>
+                <button onclick="closeModal('addTaskModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addTask(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Títol de la tasca</label>
+                    <input type="text" id="taskTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripció</label>
+                    <textarea id="taskDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Data límit (opcional)</label>
+                    <input type="date" id="taskDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Grup</label>
+                    <select id="taskGroup" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Selecciona un grup</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addTaskModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Publicar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Group Modal -->
+    <div id="addGroupModal" class="modal hidden">
+        <div class="modal-content w-full max-w-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Crear Nou Grup</h3>
+                <button onclick="closeModal('addGroupModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addGroup(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom del grup</label>
+                    <input type="text" id="groupName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripció</label>
+                    <textarea id="groupDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Professor assignat</label>
+                    <select id="groupProfessor" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Selecciona un professor</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estudiants del grup</label>
+                    <div id="groupStudentsList" class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                        <!-- Students checkboxes will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addGroupModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Crear Grup
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div id="addPaymentModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Registrar Pagament</h3>
+                <button onclick="closeModal('addPaymentModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addPayment(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estudiant</label>
+                    <select id="paymentStudent" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="">Selecciona un estudiant</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Import (€)</label>
+                    <input type="number" id="paymentAmount" min="0" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mètode de pagament</label>
+                    <select id="paymentMethod" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        <option value="Efectiu">Efectiu</option>
+                        <option value="Targeta">Targeta</option>
+                        <option value="Transferència">Transferència</option>
+                        <option value="Bizum">Bizum</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addPaymentModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Registrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Evaluation Modal -->
+    <div id="addEvaluationModal" class="modal hidden">
+        <div class="modal-content w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Nova Avaluació</h3>
+                <button onclick="closeModal('addEvaluationModal')" class="text-gray-400 hover:text-gray-600">
+                    <span class="text-2xl">×</span>
+                </button>
+            </div>
+            
+            <form onsubmit="addEvaluation(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Estudiant</label>
+                    <select id="evaluationStudent" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                        <option value="">Selecciona un estudiant</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipus d'avaluació</label>
+                    <select id="evaluationType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                        <option value="Examen">Examen</option>
+                        <option value="Pràctica">Pràctica</option>
+                        <option value="Projecte">Projecte</option>
+                        <option value="Participació">Participació</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nota (0-10)</label>
+                    <input type="number" id="evaluationScore" min="0" max="10" step="0.1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Comentaris</label>
+                    <textarea id="evaluationComments" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"></textarea>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addEvaluationModal')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel·lar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Data Storage
+        let currentUser = null;
+        let users = [
+            { email: 'admin@academia.cat', password: 'admin123', type: 'admin', name: 'Administrador' }
+        ];
+        
+        let tasks = [
+            { id: 1, title: 'Pràctica Word', description: 'Crear un document amb format', dueDate: '2024-04-15', course: 'Informàtica Bàsica', professor: 'Prof. Carles Vidal', createdDate: '2024-03-01' },
+            { id: 2, title: 'Navegació Web', description: 'Buscar informació sobre salut', dueDate: '2024-04-20', course: 'Internet i Xarxes Socials', professor: 'Prof. Laura Sánchez', createdDate: '2024-03-10' }
+        ];
+        
+        let todayAttendanceData = [];
+        
+        let students = [];
+        
+        let groups = [];
+        
+        let courses = [
+            { 
+                id: 1, 
+                name: 'Informàtica Bàsica', 
+                description: 'Introducció a l\'ordinador i sistemes operatius', 
+                duration: 8, 
+                level: 'principiant', 
+                students: 15,
+                price: 120,
+                instructor: 'Prof. Carles Vidal',
+                startDate: '2024-03-01',
+                endDate: '2024-04-26',
+                maxStudents: 20,
+                materials: ['Manual d\'usuari', 'Exercicis pràctics'],
+                objectives: ['Conèixer l\'ordinador', 'Usar el sistema operatiu', 'Gestionar fitxers']
+            },
+            { 
+                id: 2, 
+                name: 'Internet i Xarxes Socials', 
+                description: 'Navegació web i ús de xarxes socials', 
+                duration: 6, 
+                level: 'intermig', 
+                students: 12,
+                price: 90,
+                instructor: 'Prof. Laura Sánchez',
+                startDate: '2024-03-15',
+                endDate: '2024-04-26',
+                maxStudents: 15,
+                materials: ['Guia d\'Internet', 'Manual de xarxes socials'],
+                objectives: ['Navegar per Internet', 'Usar xarxes socials', 'Seguretat online']
+            },
+            { 
+                id: 3, 
+                name: 'Smartphone i Tablets', 
+                description: 'Ús d\'aplicacions mòbils i tablets', 
+                duration: 4, 
+                level: 'principiant', 
+                students: 18,
+                price: 80,
+                instructor: 'Prof. Marc Ribas',
+                startDate: '2024-04-01',
+                endDate: '2024-04-29',
+                maxStudents: 20,
+                materials: ['Manual d\'Android/iOS', 'Llista d\'aplicacions útils'],
+                objectives: ['Configurar dispositiu', 'Instal·lar aplicacions', 'Comunicar-se']
+            }
+        ];
+        
+        let schedule = [
+            { id: 1, course: 'Informàtica Bàsica', day: 1, time: '10:00', duration: 90, room: 'Aula 1', instructor: 'Prof. Carles Vidal' },
+            { id: 2, course: 'Internet i Xarxes Socials', day: 3, time: '16:00', duration: 60, room: 'Aula 2', instructor: 'Prof. Laura Sánchez' },
+            { id: 3, course: 'Smartphone i Tablets', day: 5, time: '11:00', duration: 90, room: 'Aula 3', instructor: 'Prof. Marc Ribas' }
+        ];
+
+        let attendance = [
+            { studentId: 1, courseId: 1, date: '2024-03-01', present: true, notes: '' },
+            { studentId: 1, courseId: 1, date: '2024-03-04', present: true, notes: '' },
+            { studentId: 2, courseId: 2, date: '2024-03-15', present: false, notes: 'Malalt' },
+            { studentId: 3, courseId: 3, date: '2024-04-01', present: true, notes: 'Excel·lent participació' }
+        ];
+
+        let evaluations = [
+            { studentId: 1, courseId: 1, type: 'Examen', score: 8.5, date: '2024-03-15', comments: 'Bon progrés' },
+            { studentId: 2, courseId: 2, type: 'Pràctica', score: 7.0, date: '2024-03-20', comments: 'Necessita més pràctica' },
+            { studentId: 3, courseId: 3, type: 'Projecte', score: 9.5, date: '2024-04-10', comments: 'Excel·lent treball' }
+        ];
+
+        let payments = [
+            { studentId: 1, courseId: 1, amount: 120, date: '2024-01-15', method: 'Transferència', status: 'Pagat' },
+            { studentId: 2, courseId: 2, amount: 90, date: '2024-02-01', method: 'Efectiu', status: 'Pagat' },
+            { studentId: 3, courseId: 3, amount: 80, date: '2024-01-20', method: 'Targeta', status: 'Pagat' }
+        ];
+
+        // User Management
+        const userManager = {
+            login: function(event) {
+                event.preventDefault();
+                const email = document.getElementById('userEmail').value;
+                const password = document.getElementById('userPassword').value;
+                const userType = document.getElementById('userType').value;
+                
+                const user = users.find(u => u.email === email && u.password === password && u.type === userType);
+                
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    this.updateUserInfo();
+                    this.setupUserInterface();
+                    updateStats();
+                    renderStudents();
+                    renderCourses();
+                    renderSchedule();
+                    renderProgress();
+                    renderProfessors();
+                    renderGroups();
+                    showNotification(`Benvingut/da ${user.name}!`, 'success');
+                } else {
+                    showNotification('Credencials incorrectes. Prova de nou.', 'error');
+                }
+            },
+            
+            setupUserInterface: function() {
+                // Hide/show tabs based on user type
+                const tabsToHide = ['studentsTab', 'coursesTab', 'scheduleTab', 'progressTab', 'attendanceTabBtn', 'evaluationsTabBtn', 'paymentsTabBtn', 'adminGroupsTabBtn'];
+                const tabsToShow = [];
+                
+                if (currentUser.type === 'estudiant') {
+                    // Students see their dashboard and schedule
+                    tabsToHide.forEach(tab => {
+                        const element = document.getElementById(tab);
+                        if (element && tab !== 'scheduleTab') element.style.display = 'none';
+                    });
+                    document.getElementById('studentDashboardBtn').style.display = 'block';
+                    this.renderStudentDashboard();
+                    this.renderStudentSchedule();
+                    showTab('dashboard');
+                } else if (currentUser.type === 'professor') {
+                    // Professors see groups, attendance, evaluations and schedule
+                    document.getElementById('groupsTabBtn').style.display = 'block';
+                    document.getElementById('attendanceTabBtn').style.display = 'block';
+                    document.getElementById('evaluationsTabBtn').style.display = 'block';
+                    // Hide admin-only tabs
+                    ['studentsTab', 'coursesTab', 'progressTab', 'paymentsTabBtn', 'adminGroupsTabBtn'].forEach(tab => {
+                        const element = document.getElementById(tab);
+                        if (element) element.style.display = 'none';
+                    });
+                    this.renderProfessorGroups();
+                } else {
+                    // Admin sees everything
+                    document.getElementById('professorsTabBtn').style.display = 'block';
+                    document.getElementById('attendanceTabBtn').style.display = 'block';
+                    document.getElementById('evaluationsTabBtn').style.display = 'block';
+                    document.getElementById('paymentsTabBtn').style.display = 'block';
+                    document.getElementById('adminGroupsTabBtn').style.display = 'block';
+                }
+            },
+            
+            renderStudentDashboard: function() {
+                const student = students.find(s => s.name === currentUser.name);
+                if (!student) return;
+                
+                // My Course Info
+                const myCourseInfo = document.getElementById('myCourseInfo');
+                myCourseInfo.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="font-medium">Curs:</span>
+                            <span>${student.course}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">Progrés:</span>
+                            <span class="text-green-600 font-bold">${student.progress}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="progress-bar h-2 rounded-full" style="width: ${student.progress}%"></div>
+                        </div>
+                    </div>
+                `;
+                
+                // My Tasks
+                const myTasksList = document.getElementById('myTasksList');
+                const studentTasks = tasks.filter(t => t.course === student.course);
+                myTasksList.innerHTML = studentTasks.map(task => `
+                    <div class="border-l-4 border-purple-500 pl-4 py-2 mb-3">
+                        <h5 class="font-medium">${task.title}</h5>
+                        <p class="text-sm text-gray-600">${task.description}</p>
+                        ${task.dueDate ? `<p class="text-xs text-red-600 mt-1">📅 Entrega: ${task.dueDate}</p>` : ''}
+                    </div>
+                `).join('') || '<p class="text-gray-500">No hi ha tasques assignades</p>';
+                
+                // My Attendance
+                const myAttendanceInfo = document.getElementById('myAttendanceInfo');
+                const studentAttendance = attendance.filter(a => a.studentId === student.id);
+                const attendanceRate = studentAttendance.length > 0 
+                    ? Math.round((studentAttendance.filter(a => a.present).length / studentAttendance.length) * 100)
+                    : 0;
+                
+                myAttendanceInfo.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="font-medium">Taxa d'assistència:</span>
+                            <span class="text-blue-600 font-bold">${attendanceRate}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: ${attendanceRate}%"></div>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Classes assistides: ${studentAttendance.filter(a => a.present).length} / ${studentAttendance.length}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            renderStudentSchedule: function() {
+                const student = students.find(s => s.name === currentUser.name);
+                if (!student) return;
+                
+                // Filter schedule for student's course
+                const studentSchedule = schedule.filter(s => s.course === student.course);
+                
+                // Update the schedule display for students
+                const scheduleGrid = document.getElementById('scheduleGrid');
+                const hours = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+                
+                scheduleGrid.innerHTML = '';
+                
+                hours.forEach(hour => {
+                    const row = document.createElement('div');
+                    row.className = 'grid grid-cols-8 gap-0 border-b border-gray-200';
+                    
+                    // Hour column
+                    const hourCell = document.createElement('div');
+                    hourCell.className = 'p-3 bg-gray-50 border-r border-gray-200 text-sm font-medium text-center';
+                    hourCell.textContent = hour;
+                    row.appendChild(hourCell);
+                    
+                    // Day columns
+                    for (let day = 1; day <= 7; day++) {
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'p-3 border-r border-gray-200 min-h-[60px] relative';
+                        
+                        // Check if there's a class scheduled for this student
+                        const scheduledClass = studentSchedule.find(s => 
+                            s.day === (day === 7 ? 0 : day) && s.time === hour
+                        );
+                        
+                        if (scheduledClass) {
+                            dayCell.innerHTML = `
+                                <div class="bg-blue-100 text-blue-800 p-2 rounded text-xs">
+                                    <div class="font-medium">${scheduledClass.course}</div>
+                                    <div>${scheduledClass.duration}min</div>
+                                    <div class="text-xs">${scheduledClass.instructor || ''}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        row.appendChild(dayCell);
+                    }
+                    
+                    scheduleGrid.appendChild(row);
+                });
+            },
+            
+            renderProfessorGroups: function() {
+                // My Groups
+                const myStudentsList = document.getElementById('myStudentsList');
+                const professorGroups = groups.filter(g => g.professor === currentUser.name);
+                
+                if (professorGroups.length === 0) {
+                    myStudentsList.innerHTML = '<p class="text-gray-500">No tens grups assignats</p>';
+                } else {
+                    myStudentsList.innerHTML = professorGroups.map(group => `
+                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                            <h5 class="font-medium text-lg mb-2">${group.name}</h5>
+                            <p class="text-sm text-gray-600 mb-3">${group.description}</p>
+                            <div class="space-y-2">
+                                ${group.students.map(studentId => {
+                                    const student = students.find(s => s.id === studentId);
+                                    return student ? `
+                                        <div class="flex items-center justify-between p-2 bg-white rounded">
+                                            <div>
+                                                <div class="font-medium text-sm">${student.name}</div>
+                                                <div class="text-xs text-gray-500">Progrés: ${student.progress || 0}%</div>
+                                            </div>
+                                            <div class="w-16 bg-gray-200 rounded-full h-2">
+                                                <div class="progress-bar h-2 rounded-full" style="width: ${student.progress || 0}%"></div>
+                                            </div>
+                                        </div>
+                                    ` : '';
+                                }).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                // My Tasks
+                const tasksList = document.getElementById('tasksList');
+                const professorTasks = tasks.filter(t => t.professor === currentUser.name);
+                tasksList.innerHTML = professorTasks.map(task => `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-medium">${task.title}</h5>
+                            <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 text-sm">🗑️</button>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">${task.description}</p>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>📅 Publicat: ${task.createdDate}</span>
+                            ${task.dueDate ? `<span class="text-red-600">⏰ Límit: ${task.dueDate}</span>` : ''}
+                        </div>
+                        <div class="text-xs text-blue-600 mt-1">Grup: ${task.group}</div>
+                    </div>
+                `).join('') || '<p class="text-gray-500">No has publicat cap tasca</p>';
+            },
+
+            logout: function() {
+                currentUser = null;
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+                
+                // Reset interface
+                document.getElementById('studentDashboardBtn').style.display = 'none';
+                document.getElementById('groupsTabBtn').style.display = 'none';
+                document.getElementById('professorsTabBtn').style.display = 'none';
+                document.getElementById('adminGroupsTabBtn').style.display = 'none';
+                ['studentsTab', 'coursesTab', 'scheduleTab', 'progressTab', 'attendanceTabBtn', 'evaluationsTabBtn', 'paymentsTabBtn', 'adminGroupsTabBtn'].forEach(tab => {
+                    const element = document.getElementById(tab);
+                    if (element) element.style.display = 'block';
+                });
+                
+                showNotification('Sessió tancada correctament', 'success');
+            },
+            
+            updateUserInfo: function() {
+                if (currentUser) {
+                    document.getElementById('currentUserName').textContent = currentUser.name;
+                    document.getElementById('currentUserType').textContent = 
+                        currentUser.type === 'professor' ? 'Professor' :
+                        currentUser.type === 'estudiant' ? 'Estudiant' : 'Administrador';
+                }
+            }
+        };
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            
+            // Add active class to selected button
+            event.target.classList.remove('border-transparent', 'text-gray-500');
+            event.target.classList.add('border-indigo-500', 'text-indigo-600');
+        }
+
+        // Student Management
+        function renderStudents(filteredStudents = null) {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+            
+            const studentsToRender = filteredStudents || students;
+            
+            studentsToRender.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                <span class="text-indigo-600 font-medium">${student.name.charAt(0)}</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${student.name}</div>
+                                <div class="text-sm text-gray-500">${student.email || student.phone}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.age} anys</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                            student.level === 'principiant' ? 'bg-green-100 text-green-800' :
+                            student.level === 'intermig' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                        }">
+                            ${student.level || 'principiant'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.course}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="progress-bar h-2 rounded-full" style="width: ${student.progress}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-500 mt-1">${student.progress}%</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editStudent(${student.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                        <button onclick="deleteStudent(${student.id})" class="text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showAddStudentModal() {
+            // Populate course options
+            const courseSelect = document.getElementById('studentCourse');
+            courseSelect.innerHTML = '<option value="">Selecciona un curs</option>';
+            courses.forEach(course => {
+                courseSelect.innerHTML += `<option value="${course.name}">${course.name}</option>`;
+            });
+            
+            document.getElementById('addStudentModal').classList.remove('hidden');
+        }
+
+        function addStudent(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('studentEmail').value;
+            const password = document.getElementById('studentPassword').value;
+            
+            // Check if email already exists
+            if (users.find(u => u.email === email)) {
+                showNotification('Aquest correu ja està registrat', 'error');
+                return;
+            }
+            
+            const newStudent = {
+                id: students.length + 1,
+                name: document.getElementById('studentName').value,
+                age: parseInt(document.getElementById('studentAge').value),
+                phone: document.getElementById('studentPhone').value,
+                email: email,
+                level: document.getElementById('studentLevel').value,
+                course: document.getElementById('studentCourse').value,
+                progress: 0
+            };
+            
+            // Add to users array for login
+            const newUser = {
+                email: email,
+                password: password,
+                type: 'estudiant',
+                name: newStudent.name
+            };
+            
+            students.push(newStudent);
+            users.push(newUser);
+            renderStudents();
+            updateStats();
+            closeModal('addStudentModal');
+            showNotification('Estudiant afegit correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentAge').value = '';
+            document.getElementById('studentPhone').value = '';
+            document.getElementById('studentEmail').value = '';
+            document.getElementById('studentPassword').value = '';
+            document.getElementById('studentLevel').value = 'principiant';
+            document.getElementById('studentCourse').value = '';
+        }
+
+        function deleteStudent(id) {
+            if (confirm('Estàs segur que vols eliminar aquest estudiant?')) {
+                const student = students.find(s => s.id === id);
+                if (student) {
+                    // Remove from users array too
+                    users = users.filter(u => u.email !== student.email);
+                }
+                students = students.filter(student => student.id !== id);
+                renderStudents();
+                updateStats();
+                showNotification('Estudiant eliminat correctament', 'success');
+            }
+        }
+
+        function searchStudents() {
+            const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                renderStudents();
+                return;
+            }
+            
+            const filteredStudents = students.filter(student => 
+                student.name.toLowerCase().includes(searchTerm) ||
+                student.course.toLowerCase().includes(searchTerm) ||
+                (student.email && student.email.toLowerCase().includes(searchTerm)) ||
+                (student.phone && student.phone.includes(searchTerm)) ||
+                (student.level && student.level.toLowerCase().includes(searchTerm))
+            );
+            
+            renderStudents(filteredStudents);
+        }
+
+        function editStudent(id) {
+            const student = students.find(s => s.id === id);
+            if (student) {
+                const newProgress = prompt(`Actualitzar progrés de ${student.name} (0-100):`, student.progress);
+                if (newProgress !== null && !isNaN(newProgress) && newProgress >= 0 && newProgress <= 100) {
+                    student.progress = parseInt(newProgress);
+                    renderStudents();
+                    showNotification('Progrés actualitzat correctament!', 'success');
+                }
+            }
+        }
+
+        // Course Management
+        function renderCourses() {
+            const grid = document.getElementById('coursesGrid');
+            grid.innerHTML = '';
+            
+            courses.forEach(course => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-lg p-6 card-hover';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">${course.name}</h4>
+                        <span class="px-2 py-1 bg-${course.level === 'principiant' ? 'green' : course.level === 'intermig' ? 'yellow' : 'red'}-100 text-${course.level === 'principiant' ? 'green' : course.level === 'intermig' ? 'yellow' : 'red'}-800 text-xs rounded-full">
+                            ${course.level}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">${course.description}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                        <span>📅 ${course.duration} setmanes</span>
+                        <span>👥 ${course.students} estudiants</span>
+                    </div>
+                    <div class="text-lg font-bold text-green-600 mb-4">💰 ${course.price}€</div>
+                    <div class="flex space-x-2">
+                        <button onclick="editCourse(${course.id})" class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200">
+                            Editar
+                        </button>
+                        <button onclick="deleteCourse(${course.id})" class="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200">
+                            Eliminar
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showAddCourseModal() {
+            document.getElementById('addCourseModal').classList.remove('hidden');
+        }
+
+        function addCourse(event) {
+            event.preventDefault();
+            
+            const newCourse = {
+                id: courses.length + 1,
+                name: document.getElementById('courseName').value,
+                description: document.getElementById('courseDescription').value,
+                duration: parseInt(document.getElementById('courseDuration').value),
+                level: document.getElementById('courseLevel').value,
+                price: parseFloat(document.getElementById('coursePrice').value),
+                students: 0
+            };
+            
+            courses.push(newCourse);
+            renderCourses();
+            updateStats();
+            closeModal('addCourseModal');
+            showNotification('Curs creat correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('courseName').value = '';
+            document.getElementById('courseDescription').value = '';
+            document.getElementById('courseDuration').value = '';
+            document.getElementById('courseLevel').value = 'principiant';
+            document.getElementById('coursePrice').value = '';
+        }
+
+        function deleteCourse(id) {
+            if (confirm('Estàs segur que vols eliminar aquest curs?')) {
+                courses = courses.filter(course => course.id !== id);
+                renderCourses();
+                updateStats();
+                showNotification('Curs eliminat correctament', 'success');
+            }
+        }
+
+        function editCourse(id) {
+            const course = courses.find(c => c.id === id);
+            if (course) {
+                const newName = prompt('Nou nom del curs:', course.name);
+                if (newName && newName.trim()) {
+                    course.name = newName.trim();
+                    renderCourses();
+                    showNotification('Curs actualitzat correctament!', 'success');
+                }
+            }
+        }
+
+        // Schedule Management
+        function renderSchedule() {
+            const grid = document.getElementById('scheduleGrid');
+            grid.innerHTML = '';
+            
+            const hours = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+            const days = ['Dilluns', 'Dimarts', 'Dimecres', 'Dijous', 'Divendres', 'Dissabte', 'Diumenge'];
+            
+            hours.forEach(hour => {
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-8 gap-0 border-b border-gray-200';
+                
+                // Hour column
+                const hourCell = document.createElement('div');
+                hourCell.className = 'p-3 bg-gray-50 border-r border-gray-200 text-sm font-medium text-center';
+                hourCell.textContent = hour;
+                row.appendChild(hourCell);
+                
+                // Day columns
+                for (let day = 1; day <= 7; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'p-3 border-r border-gray-200 min-h-[60px] relative';
+                    
+                    // Check if there's a class scheduled
+                    const scheduledClass = schedule.find(s => 
+                        s.day === (day === 7 ? 0 : day) && s.time === hour
+                    );
+                    
+                    if (scheduledClass) {
+                        dayCell.innerHTML = `
+                            <div class="bg-indigo-100 text-indigo-800 p-2 rounded text-xs">
+                                <div class="font-medium">${scheduledClass.course}</div>
+                                <div>${scheduledClass.duration}min</div>
+                            </div>
+                        `;
+                    }
+                    
+                    row.appendChild(dayCell);
+                }
+                
+                grid.appendChild(row);
+            });
+        }
+
+        function showAddClassModal() {
+            // Populate course options
+            const courseSelect = document.getElementById('classCourse');
+            courseSelect.innerHTML = '<option value="">Selecciona un curs</option>';
+            courses.forEach(course => {
+                courseSelect.innerHTML += `<option value="${course.name}">${course.name}</option>`;
+            });
+            
+            document.getElementById('addClassModal').classList.remove('hidden');
+        }
+
+        function addClass(event) {
+            event.preventDefault();
+            
+            const newClass = {
+                id: schedule.length + 1,
+                course: document.getElementById('classCourse').value,
+                day: parseInt(document.getElementById('classDay').value),
+                time: document.getElementById('classTime').value,
+                duration: parseInt(document.getElementById('classDuration').value)
+            };
+            
+            schedule.push(newClass);
+            renderSchedule();
+            updateStats();
+            closeModal('addClassModal');
+            showNotification('Classe programada correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('classCourse').value = '';
+            document.getElementById('classDay').value = '';
+            document.getElementById('classTime').value = '';
+            document.getElementById('classDuration').value = '60';
+        }
+
+        // Progress Management
+        function renderProgress() {
+            // Course progress
+            const courseProgressList = document.getElementById('courseProgressList');
+            courseProgressList.innerHTML = '';
+            
+            courses.forEach(course => {
+                const courseStudents = students.filter(s => s.course === course.name);
+                const avgProgress = courseStudents.length > 0 
+                    ? Math.round(courseStudents.reduce((sum, s) => sum + s.progress, 0) / courseStudents.length)
+                    : 0;
+                
+                const progressItem = document.createElement('div');
+                progressItem.className = 'mb-4 p-4 bg-white rounded-lg';
+                progressItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h5 class="font-medium">${course.name}</h5>
+                        <span class="text-sm text-gray-500">${avgProgress}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="progress-bar h-2 rounded-full" style="width: ${avgProgress}%"></div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">${courseStudents.length} estudiants</div>
+                `;
+                courseProgressList.appendChild(progressItem);
+            });
+            
+            // Top students
+            const topStudentsList = document.getElementById('topStudentsList');
+            topStudentsList.innerHTML = '';
+            
+            const sortedStudents = [...students].sort((a, b) => b.progress - a.progress).slice(0, 5);
+            
+            sortedStudents.forEach((student, index) => {
+                const studentItem = document.createElement('div');
+                studentItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg mb-2';
+                studentItem.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-white text-sm font-bold">${index + 1}</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-sm">${student.name}</div>
+                            <div class="text-xs text-gray-500">${student.course}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-green-600">${student.progress}%</div>
+                    </div>
+                `;
+                topStudentsList.appendChild(studentItem);
+            });
+        }
+
+
+
+        // Attendance Management
+        function renderAttendance() {
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '';
+            
+            attendance.forEach(record => {
+                const student = students.find(s => s.id === record.studentId);
+                const course = courses.find(c => c.id === record.courseId);
+                
+                if (student && course) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${course.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${record.present ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${record.present ? '✅ Present' : '❌ Absent'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.notes}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        // Evaluations Management
+        function renderEvaluations() {
+            const tbody = document.getElementById('evaluationsTableBody');
+            tbody.innerHTML = '';
+            
+            let evaluationsToShow = evaluations;
+            
+            // If professor, only show evaluations for their students
+            if (currentUser.type === 'professor') {
+                const professorGroups = groups.filter(g => g.professor === currentUser.name);
+                const professorStudentIds = professorGroups.flatMap(g => g.students);
+                evaluationsToShow = evaluations.filter(e => professorStudentIds.includes(e.studentId));
+            }
+            
+            evaluationsToShow.forEach(evaluation => {
+                const student = students.find(s => s.id === evaluation.studentId);
+                
+                if (student) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${evaluation.group || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${evaluation.type}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${evaluation.score >= 7 ? 'bg-green-100 text-green-800' : evaluation.score >= 5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">
+                                ${evaluation.score}/10
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${evaluation.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${evaluation.comments}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function showAddEvaluationModal() {
+            // Populate students for professor
+            const studentSelect = document.getElementById('evaluationStudent');
+            
+            if (currentUser.type === 'professor') {
+                const professorGroups = groups.filter(g => g.professor === currentUser.name);
+                const professorStudentIds = professorGroups.flatMap(g => g.students);
+                const professorStudents = students.filter(s => professorStudentIds.includes(s.id));
+                
+                studentSelect.innerHTML = '<option value="">Selecciona un estudiant</option>';
+                professorStudents.forEach(student => {
+                    studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+                });
+            } else {
+                // Admin can evaluate all students
+                studentSelect.innerHTML = '<option value="">Selecciona un estudiant</option>';
+                students.forEach(student => {
+                    studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+                });
+            }
+            
+            document.getElementById('addEvaluationModal').classList.remove('hidden');
+        }
+
+        function addEvaluation(event) {
+            event.preventDefault();
+            
+            const studentId = parseInt(document.getElementById('evaluationStudent').value);
+            const student = students.find(s => s.id === studentId);
+            
+            // Find which group the student belongs to (for professor)
+            let groupName = '';
+            if (currentUser.type === 'professor') {
+                const studentGroup = groups.find(g => g.professor === currentUser.name && g.students.includes(studentId));
+                groupName = studentGroup ? studentGroup.name : '';
+            }
+            
+            const newEvaluation = {
+                id: evaluations.length + 1,
+                studentId: studentId,
+                type: document.getElementById('evaluationType').value,
+                score: parseFloat(document.getElementById('evaluationScore').value),
+                date: new Date().toISOString().split('T')[0],
+                comments: document.getElementById('evaluationComments').value,
+                professor: currentUser.name,
+                group: groupName
+            };
+            
+            evaluations.push(newEvaluation);
+            renderEvaluations();
+            closeModal('addEvaluationModal');
+            showNotification('Avaluació afegida correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('evaluationStudent').value = '';
+            document.getElementById('evaluationType').value = 'Examen';
+            document.getElementById('evaluationScore').value = '';
+            document.getElementById('evaluationComments').value = '';
+        }
+
+        // Payments Management
+        function renderPayments() {
+            const tbody = document.getElementById('paymentsTableBody');
+            tbody.innerHTML = '';
+            
+            let totalRevenue = 0;
+            let pendingAmount = 0;
+            let monthlyRevenue = 0;
+            const currentMonth = new Date().getMonth();
+            
+            payments.forEach(payment => {
+                const student = students.find(s => s.id === payment.studentId);
+                const course = courses.find(c => c.id === payment.courseId);
+                
+                if (student && course) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${course.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${payment.amount}€</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${payment.method}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${payment.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${payment.status === 'Pagat' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${payment.status}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                    
+                    if (payment.status === 'Pagat') {
+                        totalRevenue += payment.amount;
+                        const paymentMonth = new Date(payment.date).getMonth();
+                        if (paymentMonth === currentMonth) {
+                            monthlyRevenue += payment.amount;
+                        }
+                    } else {
+                        pendingAmount += payment.amount;
+                    }
+                }
+            });
+            
+            document.getElementById('totalRevenue').textContent = totalRevenue + '€';
+            document.getElementById('pendingPayments').textContent = pendingAmount + '€';
+            document.getElementById('monthlyRevenue').textContent = monthlyRevenue + '€';
+        }
+
+        function showAddPaymentModal() {
+            // Populate students
+            const studentSelect = document.getElementById('paymentStudent');
+            studentSelect.innerHTML = '<option value="">Selecciona un estudiant</option>';
+            students.forEach(student => {
+                studentSelect.innerHTML += `<option value="${student.id}">${student.name}</option>`;
+            });
+            
+            document.getElementById('addPaymentModal').classList.remove('hidden');
+        }
+
+        function addPayment(event) {
+            event.preventDefault();
+            
+            const studentId = parseInt(document.getElementById('paymentStudent').value);
+            const student = students.find(s => s.id === studentId);
+            const course = courses.find(c => c.name === student.course);
+            
+            const newPayment = {
+                id: payments.length + 1,
+                studentId: studentId,
+                courseId: course ? course.id : 1,
+                amount: parseFloat(document.getElementById('paymentAmount').value),
+                method: document.getElementById('paymentMethod').value,
+                date: new Date().toISOString().split('T')[0],
+                status: 'Pagat'
+            };
+            
+            payments.push(newPayment);
+            renderPayments();
+            closeModal('addPaymentModal');
+            showNotification('Pagament registrat correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('paymentStudent').value = '';
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentMethod').value = 'Efectiu';
+        }
+
+
+
+        // Statistics
+        function updateStats() {
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('activeCourses').textContent = courses.length;
+            document.getElementById('todayClasses').textContent = schedule.length;
+            
+            // Calculate satisfaction (average progress)
+            const avgProgress = students.length > 0 
+                ? Math.round(students.reduce((sum, s) => sum + s.progress, 0) / students.length)
+                : 0;
+            document.getElementById('satisfaction').textContent = avgProgress + '%';
+        }
+
+        // Professor Management
+        function renderProfessors() {
+            const tbody = document.getElementById('professorsTableBody');
+            tbody.innerHTML = '';
+            
+            const professors = users.filter(user => user.type === 'professor');
+            
+            professors.forEach(professor => {
+                const courseStudents = students.filter(s => s.course === professor.course);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                <span class="text-indigo-600 font-medium">${professor.name.charAt(0)}</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${professor.name}</div>
+                                <div class="text-sm text-gray-500">Professor</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${professor.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${professor.course || 'No assignat'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${courseStudents.length} estudiants</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editProfessor('${professor.email}')" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                        <button onclick="deleteProfessor('${professor.email}')" class="text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showAddProfessorModal() {
+            // Populate course options
+            const courseSelect = document.getElementById('professorCourse');
+            courseSelect.innerHTML = '<option value="">Selecciona un curs</option>';
+            courses.forEach(course => {
+                courseSelect.innerHTML += `<option value="${course.name}">${course.name}</option>`;
+            });
+            
+            document.getElementById('addProfessorModal').classList.remove('hidden');
+        }
+
+        function addProfessor(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('professorEmail').value;
+            const name = document.getElementById('professorName').value;
+            const password = document.getElementById('professorPassword').value;
+            const course = document.getElementById('professorCourse').value;
+            
+            // Check if email already exists
+            if (users.find(u => u.email === email)) {
+                showNotification('Aquest correu ja està registrat', 'error');
+                return;
+            }
+            
+            const newProfessor = {
+                email: email,
+                password: password,
+                type: 'professor',
+                name: name,
+                course: course
+            };
+            
+            users.push(newProfessor);
+            renderProfessors();
+            closeModal('addProfessorModal');
+            showNotification('Professor afegit correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('professorName').value = '';
+            document.getElementById('professorEmail').value = '';
+            document.getElementById('professorPassword').value = '';
+            document.getElementById('professorCourse').value = '';
+        }
+
+        function deleteProfessor(email) {
+            if (confirm('Estàs segur que vols eliminar aquest professor?')) {
+                users = users.filter(user => user.email !== email);
+                renderProfessors();
+                showNotification('Professor eliminat correctament', 'success');
+            }
+        }
+
+        function editProfessor(email) {
+            const professor = users.find(u => u.email === email);
+            if (professor) {
+                const newCourse = prompt(`Assignar nou curs a ${professor.name}:`, professor.course || '');
+                if (newCourse !== null) {
+                    professor.course = newCourse.trim();
+                    renderProfessors();
+                    showNotification('Professor actualitzat correctament!', 'success');
+                }
+            }
+        }
+
+        // Group Management
+        function renderGroups() {
+            const grid = document.getElementById('groupsGrid');
+            grid.innerHTML = '';
+            
+            groups.forEach(group => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl shadow-lg p-6 card-hover';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">${group.name}</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="editGroup(${group.id})" class="text-blue-600 hover:text-blue-800 text-sm">✏️</button>
+                            <button onclick="deleteGroup(${group.id})" class="text-red-600 hover:text-red-800 text-sm">🗑️</button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">${group.description}</p>
+                    <div class="mb-4">
+                        <div class="text-sm font-medium text-gray-700 mb-2">👨‍🏫 Professor:</div>
+                        <div class="text-sm text-gray-600">${group.professor}</div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="text-sm font-medium text-gray-700 mb-2">👥 Estudiants (${group.students.length}):</div>
+                        <div class="space-y-1">
+                            ${group.students.map(studentId => {
+                                const student = students.find(s => s.id === studentId);
+                                return student ? `<div class="text-xs text-gray-600">• ${student.name}</div>` : '';
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            if (groups.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No hi ha grups creats encara</div>';
+            }
+        }
+
+        function showAddGroupModal() {
+            // Populate professors
+            const professorSelect = document.getElementById('groupProfessor');
+            const professors = users.filter(u => u.type === 'professor');
+            professorSelect.innerHTML = '<option value="">Selecciona un professor</option>';
+            professors.forEach(prof => {
+                professorSelect.innerHTML += `<option value="${prof.name}">${prof.name}</option>`;
+            });
+            
+            // Populate students
+            const studentsList = document.getElementById('groupStudentsList');
+            studentsList.innerHTML = students.map(student => `
+                <label class="flex items-center space-x-2 mb-2">
+                    <input type="checkbox" value="${student.id}" class="group-student-checkbox">
+                    <span class="text-sm">${student.name}</span>
+                </label>
+            `).join('') || '<p class="text-gray-500 text-sm">No hi ha estudiants disponibles</p>';
+            
+            document.getElementById('addGroupModal').classList.remove('hidden');
+        }
+
+        function addGroup(event) {
+            event.preventDefault();
+            
+            const selectedStudents = Array.from(document.querySelectorAll('.group-student-checkbox:checked'))
+                .map(cb => parseInt(cb.value));
+            
+            const newGroup = {
+                id: groups.length + 1,
+                name: document.getElementById('groupName').value,
+                description: document.getElementById('groupDescription').value,
+                professor: document.getElementById('groupProfessor').value,
+                students: selectedStudents,
+                createdDate: new Date().toISOString().split('T')[0]
+            };
+            
+            groups.push(newGroup);
+            renderGroups();
+            closeModal('addGroupModal');
+            showNotification('Grup creat correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('groupName').value = '';
+            document.getElementById('groupDescription').value = '';
+            document.getElementById('groupProfessor').value = '';
+            document.querySelectorAll('.group-student-checkbox').forEach(cb => cb.checked = false);
+        }
+
+        function editGroup(id) {
+            const group = groups.find(g => g.id === id);
+            if (group) {
+                const newName = prompt('Nou nom del grup:', group.name);
+                if (newName && newName.trim()) {
+                    group.name = newName.trim();
+                    renderGroups();
+                    showNotification('Grup actualitzat correctament!', 'success');
+                }
+            }
+        }
+
+        function deleteGroup(id) {
+            if (confirm('Estàs segur que vols eliminar aquest grup?')) {
+                groups = groups.filter(group => group.id !== id);
+                renderGroups();
+                showNotification('Grup eliminat correctament', 'success');
+            }
+        }
+
+        // Task Management
+        function showAddTaskModal() {
+            // Populate groups for professor
+            const groupSelect = document.getElementById('taskGroup');
+            const professorGroups = groups.filter(g => g.professor === currentUser.name);
+            groupSelect.innerHTML = '<option value="">Selecciona un grup</option>';
+            professorGroups.forEach(group => {
+                groupSelect.innerHTML += `<option value="${group.name}">${group.name}</option>`;
+            });
+            
+            document.getElementById('addTaskModal').classList.remove('hidden');
+        }
+
+        function addTask(event) {
+            event.preventDefault();
+            
+            const newTask = {
+                id: tasks.length + 1,
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                group: document.getElementById('taskGroup').value,
+                professor: currentUser.name,
+                createdDate: new Date().toISOString().split('T')[0]
+            };
+            
+            tasks.push(newTask);
+            userManager.renderProfessorGroups();
+            closeModal('addTaskModal');
+            showNotification('Tasca publicada correctament!', 'success');
+            
+            // Reset form
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskDueDate').value = '';
+            document.getElementById('taskGroup').value = '';
+        }
+
+        function deleteTask(id) {
+            if (confirm('Estàs segur que vols eliminar aquesta tasca?')) {
+                tasks = tasks.filter(task => task.id !== id);
+                userManager.renderProfessorGroups();
+                showNotification('Tasca eliminada correctament', 'success');
+            }
+        }
+
+        // Attendance Management for Professors
+        function showTodayAttendance() {
+            const professorCourse = currentUser.course;
+            const courseStudents = students.filter(s => s.course === professorCourse);
+            
+            if (courseStudents.length === 0) {
+                showNotification('No tens estudiants assignats', 'warning');
+                return;
+            }
+            
+            todayAttendanceData = courseStudents.map(student => ({
+                studentId: student.id,
+                studentName: student.name,
+                present: false,
+                notes: ''
+            }));
+            
+            const todayAttendanceList = document.getElementById('todayAttendanceList');
+            todayAttendanceList.innerHTML = todayAttendanceData.map(record => `
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg mb-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <span class="text-indigo-600 font-medium">${record.studentName.charAt(0)}</span>
+                        </div>
+                        <span class="font-medium">${record.studentName}</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" onchange="updateAttendance(${record.studentId}, this.checked)" 
+                                   class="mr-2 w-4 h-4 text-green-600 rounded focus:ring-green-500">
+                            <span class="text-sm">Present</span>
+                        </label>
+                        <input type="text" placeholder="Notes..." onchange="updateAttendanceNotes(${record.studentId}, this.value)"
+                               class="px-2 py-1 border border-gray-300 rounded text-sm w-32">
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('todayAttendanceSection').classList.remove('hidden');
+        }
+
+        function updateAttendance(studentId, present) {
+            const record = todayAttendanceData.find(r => r.studentId === studentId);
+            if (record) {
+                record.present = present;
+            }
+        }
+
+        function updateAttendanceNotes(studentId, notes) {
+            const record = todayAttendanceData.find(r => r.studentId === studentId);
+            if (record) {
+                record.notes = notes;
+            }
+        }
+
+        function saveAttendance() {
+            const today = new Date().toISOString().split('T')[0];
+            const courseId = courses.find(c => c.name === currentUser.course)?.id || 1;
+            
+            todayAttendanceData.forEach(record => {
+                attendance.push({
+                    studentId: record.studentId,
+                    courseId: courseId,
+                    date: today,
+                    present: record.present,
+                    notes: record.notes
+                });
+            });
+            
+            renderAttendance();
+            cancelAttendance();
+            showNotification('Assistència guardada correctament!', 'success');
+        }
+
+        function cancelAttendance() {
+            document.getElementById('todayAttendanceSection').classList.add('hidden');
+            todayAttendanceData = [];
+        }
+
+        // Utility Functions
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function exportAllData() {
+            const data = {
+                students: students,
+                courses: courses,
+                schedule: schedule,
+                instructors: instructors,
+                attendance: attendance,
+                evaluations: evaluations,
+                payments: payments,
+                resources: resources,
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `academia-digital-senior-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Dades exportades correctament!', 'success');
+        }
+
+        // Date and Time Updates
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            };
+            
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('ca-ES', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('ca-ES', timeOptions);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.classList.add('hidden');
+                }
+            });
+            
+            // Initialize all render functions
+            renderAttendance();
+            renderEvaluations();
+            renderPayments();
+        });
+    
+// === Funcions d'eliminació ===
+
+// Eliminar estudiant
+function deleteStudent(studentId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest estudiant?")) {
+        students = students.filter(s => s.id !== studentId);
+        renderStudents();
+        showNotification("Estudiant eliminat correctament", "success");
+    }
+}
+
+// Eliminar curs
+function deleteCourse(courseId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest curs?")) {
+        courses = courses.filter(c => c.id !== courseId);
+        renderCourses();
+        showNotification("Curs eliminat correctament", "success");
+    }
+}
+
+// Eliminar professor
+function deleteProfessor(professorId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest professor?")) {
+        professors = professors.filter(p => p.id !== professorId);
+        renderProfessors();
+        showNotification("Professor eliminat correctament", "success");
+    }
+}
+
+// Eliminar grup
+function deleteGroup(groupId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest grup?")) {
+        groups = groups.filter(g => g.id !== groupId);
+        renderGroups();
+        showNotification("Grup eliminat correctament", "success");
+    }
+}
+
+// Eliminar tasca (admin o professor creador)
+function deleteTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
+    if (confirm("Segur que vols eliminar aquesta tasca?")) {
+        tasks = tasks.filter(t => t.id !== taskId);
+        renderProfessorGroups();
+        showNotification("Tasca eliminada correctament", "success");
+    }
+}
+
+// Eliminar avaluació
+function deleteEvaluation(evaluationIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
+        evaluations.splice(evaluationIndex, 1);
+        renderEvaluations();
+        showNotification("Avaluació eliminada correctament", "success");
+    }
+}
+
+// Eliminar pagament
+function deletePayment(paymentIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest pagament?")) {
+        payments.splice(paymentIndex, 1);
+        renderPayments();
+        showNotification("Pagament eliminat correctament", "success");
+    }
+}
+
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989465a7442bc902',t:'MTc1OTU3Nzk0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+// === Funcions d'eliminació ===
+
+// Eliminar estudiant
+function deleteStudent(studentId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest estudiant?")) {
+        students = students.filter(s => s.id !== studentId);
+        renderStudents();
+        showNotification("Estudiant eliminat correctament", "success");
+    }
+}
+
+// Eliminar curs
+function deleteCourse(courseId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest curs?")) {
+        courses = courses.filter(c => c.id !== courseId);
+        renderCourses();
+        showNotification("Curs eliminat correctament", "success");
+    }
+}
+
+// Eliminar professor
+function deleteProfessor(professorId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest professor?")) {
+        professors = professors.filter(p => p.id !== professorId);
+        renderProfessors();
+        showNotification("Professor eliminat correctament", "success");
+    }
+}
+
+// Eliminar grup
+function deleteGroup(groupId) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest grup?")) {
+        groups = groups.filter(g => g.id !== groupId);
+        renderGroups();
+        showNotification("Grup eliminat correctament", "success");
+    }
+}
+
+// Eliminar tasca (admin o professor creador)
+function deleteTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
+    if (confirm("Segur que vols eliminar aquesta tasca?")) {
+        tasks = tasks.filter(t => t.id !== taskId);
+        renderProfessorGroups();
+        showNotification("Tasca eliminada correctament", "success");
+    }
+}
+
+// Eliminar avaluació
+function deleteEvaluation(evaluationIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
+        evaluations.splice(evaluationIndex, 1);
+        renderEvaluations();
+        showNotification("Avaluació eliminada correctament", "success");
+    }
+}
+
+// Eliminar pagament
+function deletePayment(paymentIndex) {
+    if (currentUser.type !== 'admin') return;
+    if (confirm("Segur que vols eliminar aquest pagament?")) {
+        payments.splice(paymentIndex, 1);
+        renderPayments();
+        showNotification("Pagament eliminat correctament", "success");
+    }
+}
+
+</script></body>
+</html>

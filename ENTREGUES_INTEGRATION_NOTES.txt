@@ -1,0 +1,13 @@
+Notes d'integració automàtica:
+
+- Created entregues app with adapted models, views, templates.
+
+Accions manuals recomanades:
+- No settings.py found automatically. Afegiu "entregues" a INSTALLED_APPS i configureu MEDIA_URL/MEDIA_ROOT manualment.
+- No s’ha trobat urls.py per modificar; afegeix la inclusió d'URLs manualment.
+
+Després d'això, executa:
+  python manage.py makemigrations entregues
+  python manage.py migrate
+
+Assegura't de servir fitxers MEDIA en desenvolupament amb django.views.static.serve o configura el teu servidor d'arxius a producció.
