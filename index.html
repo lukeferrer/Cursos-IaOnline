@@ -4,82 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acadèmia Digital Sènior - Sistema de Gestió Professional</title>
-    <script src="https://cdn.tailwindcss.com">
-// === Funcions d'eliminació ===
-
-// Eliminar estudiant
-function deleteStudent(studentId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest estudiant?")) {
-        students = students.filter(s => s.id !== studentId);
-        renderStudents();
-        showNotification("Estudiant eliminat correctament", "success");
-    }
-}
-
-// Eliminar curs
-function deleteCourse(courseId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest curs?")) {
-        courses = courses.filter(c => c.id !== courseId);
-        renderCourses();
-        showNotification("Curs eliminat correctament", "success");
-    }
-}
-
-// Eliminar professor
-function deleteProfessor(professorId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest professor?")) {
-        professors = professors.filter(p => p.id !== professorId);
-        renderProfessors();
-        showNotification("Professor eliminat correctament", "success");
-    }
-}
-
-// Eliminar grup
-function deleteGroup(groupId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest grup?")) {
-        groups = groups.filter(g => g.id !== groupId);
-        renderGroups();
-        showNotification("Grup eliminat correctament", "success");
-    }
-}
-
-// Eliminar tasca (admin o professor creador)
-function deleteTask(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
-    if (confirm("Segur que vols eliminar aquesta tasca?")) {
-        tasks = tasks.filter(t => t.id !== taskId);
-        renderProfessorGroups();
-        showNotification("Tasca eliminada correctament", "success");
-    }
-}
-
-// Eliminar avaluació
-function deleteEvaluation(evaluationIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
-        evaluations.splice(evaluationIndex, 1);
-        renderEvaluations();
-        showNotification("Avaluació eliminada correctament", "success");
-    }
-}
-
-// Eliminar pagament
-function deletePayment(paymentIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest pagament?")) {
-        payments.splice(paymentIndex, 1);
-        renderPayments();
-        showNotification("Pagament eliminat correctament", "success");
-    }
-}
-
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             box-sizing: border-box;
@@ -1055,7 +980,9 @@ function deletePayment(paymentIndex) {
         // Data Storage
         let currentUser = null;
         let users = [
-            { email: 'admin@academia.cat', password: 'admin123', type: 'admin', name: 'Administrador' }
+            { email: 'admin@academia.cat', password: 'admin123', type: 'admin', name: 'Administrador' },
+            { email: '11casesjoseporiol@escolamarinada.com', password: '0818', type: 'professor', name: 'Prof. Josep Oriol Cases' },
+            { email: '11ferrerluke@escolamarinada.com', password: 'lf3517lf', type: 'professor', name: 'Prof. Luke Ferrer' }
         ];
         
         let tasks = [
@@ -2423,156 +2350,710 @@ function deletePayment(paymentIndex) {
             renderEvaluations();
             renderPayments();
         });
-    
-// === Funcions d'eliminació ===
-
-// Eliminar estudiant
-function deleteStudent(studentId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest estudiant?")) {
-        students = students.filter(s => s.id !== studentId);
-        renderStudents();
-        showNotification("Estudiant eliminat correctament", "success");
-    }
-}
-
-// Eliminar curs
-function deleteCourse(courseId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest curs?")) {
-        courses = courses.filter(c => c.id !== courseId);
-        renderCourses();
-        showNotification("Curs eliminat correctament", "success");
-    }
-}
-
-// Eliminar professor
-function deleteProfessor(professorId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest professor?")) {
-        professors = professors.filter(p => p.id !== professorId);
-        renderProfessors();
-        showNotification("Professor eliminat correctament", "success");
-    }
-}
-
-// Eliminar grup
-function deleteGroup(groupId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest grup?")) {
-        groups = groups.filter(g => g.id !== groupId);
-        renderGroups();
-        showNotification("Grup eliminat correctament", "success");
-    }
-}
-
-// Eliminar tasca (admin o professor creador)
-function deleteTask(taskId) {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
-    if (confirm("Segur que vols eliminar aquesta tasca?")) {
-        tasks = tasks.filter(t => t.id !== taskId);
-        renderProfessorGroups();
-        showNotification("Tasca eliminada correctament", "success");
-    }
-}
-
-// Eliminar avaluació
-function deleteEvaluation(evaluationIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
-        evaluations.splice(evaluationIndex, 1);
-        renderEvaluations();
-        showNotification("Avaluació eliminada correctament", "success");
-    }
-}
-
-// Eliminar pagament
-function deletePayment(paymentIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest pagament?")) {
-        payments.splice(paymentIndex, 1);
-        renderPayments();
-        showNotification("Pagament eliminat correctament", "success");
-    }
-}
-
-</script>
+    </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989465a7442bc902',t:'MTc1OTU3Nzk0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
-// === Funcions d'eliminació ===
+// === Submissions feature ===
+let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
 
-// Eliminar estudiant
-function deleteStudent(studentId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest estudiant?")) {
-        students = students.filter(s => s.id !== studentId);
-        renderStudents();
-        showNotification("Estudiant eliminat correctament", "success");
+function saveSubmissions() {
+    localStorage.setItem('submissions', JSON.stringify(submissions));
+}
+
+function submitTask(event, taskId, studentId) {
+    event.preventDefault();
+    const fileInput = event.target.querySelector("input[type=file]");
+    const commentInput = event.target.querySelector("textarea");
+    if (!fileInput || fileInput.files.length === 0) {
+        showNotification("Selecciona un fitxer abans d'enviar.", "error");
+        return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const entry = {
+            id: Date.now(),
+            taskId: taskId,
+            studentId: studentId,
+            fileName: file.name,
+            fileType: file.type || 'application/octet-stream',
+            fileData: dataUrl,
+            comment: commentInput ? commentInput.value : '',
+            date: new Date().toISOString().split('T')[0]
+        };
+        submissions.push(entry);
+        saveSubmissions();
+        showNotification("Tasca enviada correctament!", "success");
+        event.target.reset();
+        if (currentUser && currentUser.type === 'estudiant') {
+            userManager.renderStudentDashboard();
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function viewSubmissions(taskId) {
+    const subs = submissions.filter(s => s.taskId === taskId);
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-bold">Lliuraments de la tasca</h4>
+                <button onclick="document.body.removeChild(this.closest('.modal'))" class="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div id="submissionsList" class="space-y-3"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const listDiv = modal.querySelector('#submissionsList');
+    if (subs.length === 0) {
+        listDiv.innerHTML = '<p class="text-gray-500">Encara no hi ha lliuraments</p>';
+    } else {
+        subs.forEach(s => {
+            const student = (typeof students !== 'undefined') ? students.find(st => st.id === s.studentId) : null;
+            const name = student ? student.name : 'Estudiant desconegut';
+            const item = document.createElement('div');
+            item.className = 'border p-3 rounded';
+            item.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-medium">${name}</div>
+                        <div class="text-xs text-gray-500">${s.date} · ${s.fileName}</div>
+                        <div class="text-sm text-gray-700 mt-1">💬 ${s.comment || 'Sense comentari'}</div>
+                    </div>
+                    <div class="text-right space-y-2">
+                        <a class="px-3 py-1 border rounded text-sm inline-block download-link">Descarregar</a>
+                        ${"<!--delete-btn-place-->"} 
+                    </div>
+                </div>
+            `;
+            const dl = item.querySelector('.download-link');
+            dl.href = s.fileData;
+            dl.download = s.fileName;
+            if (currentUser && (currentUser.type === 'admin' || currentUser.type === 'professor')) {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'px-3 py-1 bg-red-600 text-white rounded text-sm';
+                delBtn.textContent = 'Eliminar';
+                delBtn.addEventListener('click', () => {
+                    if (confirm('Eliminar aquest lliurament?')) {
+                        const idx = submissions.findIndex(x => x.id === s.id);
+                        if (idx !== -1) {
+                            submissions.splice(idx,1);
+                            saveSubmissions();
+                            showNotification('Lliurament eliminat', 'success');
+                            modal.remove();
+                        }
+                    }
+                });
+                item.querySelector('.text-right').appendChild(delBtn);
+            }
+            listDiv.appendChild(item);
+        });
     }
 }
 
-// Eliminar curs
-function deleteCourse(courseId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest curs?")) {
-        courses = courses.filter(c => c.id !== courseId);
-        renderCourses();
-        showNotification("Curs eliminat correctament", "success");
+// Override student dashboard render to include submission forms for tasks
+userManager.renderStudentDashboard = function() {
+    const student = students.find(s => s.name === currentUser.name);
+    if (!student) return;
+    const myCourseInfo = document.getElementById('myCourseInfo');
+    myCourseInfo.innerHTML = `
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="font-medium">Curs:</span>
+                <span>${student.course}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="font-medium">Progrés:</span>
+                <span class="text-green-600 font-bold">${student.progress}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="progress-bar h-2 rounded-full" style="width: ${student.progress}%"></div>
+            </div>
+        </div>
+    `;
+
+    const myTasksList = document.getElementById('myTasksList');
+    const studentTasks = tasks.filter(t => t.course === student.course || t.group === student.groupId);
+    myTasksList.innerHTML = studentTasks.map(task => {
+        const already = submissions.find(s => s.taskId === task.id && s.studentId === student.id);
+        return `
+            <div class="border-l-4 border-purple-500 pl-4 py-2 mb-3">
+                <h5 class="font-medium">${task.title}</h5>
+                <p class="text-sm text-gray-600">${task.description}</p>
+                ${task.dueDate ? `<p class="text-xs text-red-600 mt-1">📅 Entrega: ${task.dueDate}</p>` : ''}
+                ${ already ? `<p class="text-sm text-green-600 mt-2">✅ Lliurat: ${already.fileName} (${already.date})</p>` : `
+                <form onsubmit="submitTask(event, ${task.id}, ${student.id})" class="mt-2 space-y-2">
+                    <input type="file" required class="block w-full text-sm text-gray-600" />
+                    <textarea placeholder="Comentari privat (opcional)" class="w-full border rounded p-2 text-sm"></textarea>
+                    <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">📤 Enviar</button>
+                </form>`}
+            </div>
+        `;
+    }).join('') || '<p class="text-gray-500">No hi ha tasques assignades</p>';
+
+    const myAttendanceInfo = document.getElementById('myAttendanceInfo');
+    const studentAttendance = attendance.filter(a => a.studentId === student.id);
+    const attendanceRate = studentAttendance.length > 0 
+        ? Math.round((studentAttendance.filter(a => a.present).length / studentAttendance.length) * 100)
+        : 0;
+
+    myAttendanceInfo.innerHTML = `
+        <div class="space-y-3">
+            <div class="flex justify-between">
+                <span class="font-medium">Taxa d'assistència:</span>
+                <span class="text-blue-600 font-bold">${attendanceRate}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" style="width: ${attendanceRate}%"></div>
+            </div>
+            <div class="text-sm text-gray-600">
+                Classes assistides: ${studentAttendance.filter(a => a.present).length} / ${studentAttendance.length}
+            </div>
+        </div>
+    `;
+};
+
+// Override professor groups render to include 'view submissions' button for each task
+userManager.renderProfessorGroups = function() {
+    const myStudentsList = document.getElementById('myStudentsList');
+    const professorGroups = groups.filter(g => g.professor === currentUser.name);
+
+    if (professorGroups.length === 0) {
+        myStudentsList.innerHTML = '<p class="text-gray-500">No tens grups assignats</p>';
+    } else {
+        myStudentsList.innerHTML = professorGroups.map(group => `
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h5 class="font-medium text-lg mb-2">${group.name}</h5>
+                <p class="text-sm text-gray-600 mb-3">${group.description}</p>
+                <div class="space-y-2">
+                    ${group.students.map(studentId => {
+                        const student = students.find(s => s.id === studentId);
+                        return student ? `
+                            <div class="flex items-center justify-between p-2 bg-white rounded">
+                                <div>
+                                    <div class="font-medium text-sm">${student.name}</div>
+                                    <div class="text-xs text-gray-500">Progrés: ${student.progress || 0}%</div>
+                                </div>
+                                <div class="w-16 bg-gray-200 rounded-full h-2">
+                                    <div class="progress-bar h-2 rounded-full" style="width: ${student.progress || 0}%"></div>
+                                </div>
+                            </div>
+                        ` : '';
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
     }
+
+    const tasksList = document.getElementById('tasksList');
+    const professorTasks = tasks.filter(t => t.professor === currentUser.name);
+    tasksList.innerHTML = professorTasks.map(task => `
+        <div class="border border-gray-200 rounded-lg p-4 mb-3">
+            <div class="flex justify-between items-start mb-2">
+                <h5 class="font-medium">${task.title}</h5>
+                <div>
+                    <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 text-sm">🗑️</button>
+                    <button onclick="viewSubmissions(${task.id})" class="ml-2 text-blue-600 hover:text-blue-800 text-sm">📥 Veure lliuraments</button>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-2">${task.description}</p>
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>📅 Publicat: ${task.createdDate}</span>
+                ${task.dueDate ? `<span class="text-red-600">⏰ Límit: ${task.dueDate}</span>` : ''}
+            </div>
+            <div class="text-xs text-blue-600 mt-1">Grup: ${task.group || '—'}</div>
+        </div>
+    `).join('') || '<p class="text-gray-500">No has publicat cap tasca</p>';
+};
+
+// === Full Edit Modals and Save Handlers (admin + professor permissions) ===
+
+// Utility to create and show modal with html content
+function openModal(htmlContent) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `<div class="modal-content w-full max-w-2xl p-4">${htmlContent}</div>`;
+    document.body.appendChild(modal);
+    return modal;
 }
 
-// Eliminar professor
-function deleteProfessor(professorId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest professor?")) {
-        professors = professors.filter(p => p.id !== professorId);
-        renderProfessors();
-        showNotification("Professor eliminat correctament", "success");
-    }
+// Close modal helper
+function closeModal(el) {
+    const modal = el.closest ? el.closest('.modal') : el;
+    if (modal && modal.parentElement) modal.parentElement.removeChild(modal);
 }
 
-// Eliminar grup
-function deleteGroup(groupId) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest grup?")) {
-        groups = groups.filter(g => g.id !== groupId);
-        renderGroups();
-        showNotification("Grup eliminat correctament", "success");
-    }
+// Edit Student - full fields
+function editStudent(studentId) {
+    if (!currentUser || currentUser.type !== 'admin') return;
+    const student = students.find(s => s.id === studentId);
+    if (!student) return alert('Estudiant no trobat');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar estudiant</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveStudentEdit(event, ${studentId})" class="space-y-3">
+            <input type="text" id="edit_name" value="${student.name || ''}" class="w-full border p-2 rounded" required/>
+            <input type="number" id="edit_age" value="${student.age || ''}" class="w-full border p-2 rounded" min="0"/>
+            <input type="email" id="edit_email" value="${student.email || ''}" class="w-full border p-2 rounded"/>
+            <input type="tel" id="edit_phone" value="${student.phone || ''}" class="w-full border p-2 rounded"/>
+            <select id="edit_level" class="w-full border p-2 rounded">
+                <option value="principiant" ${student.level==='principiant'?'selected':''}>Principiant</option>
+                <option value="intermig" ${student.level==='intermig'?'selected':''}>Intermig</option>
+                <option value="avançat" ${student.level==='avançat'?'selected':''}>Avançat</option>
+            </select>
+            <select id="edit_course" class="w-full border p-2 rounded">
+                <option value="">-- Selecciona curs --</option>
+                ${courses.map(c=>`<option value="${c.name}" ${student.course===c.name?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+            <input type="number" id="edit_progress" value="${student.progress || 0}" class="w-full border p-2 rounded" min="0" max="100"/>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
 }
 
-// Eliminar tasca (admin o professor creador)
-function deleteTask(taskId) {
+function saveStudentEdit(event, studentId) {
+    event.preventDefault();
+    const s = students.find(s => s.id === studentId);
+    if (!s) return;
+    s.name = document.getElementById('edit_name').value;
+    s.age = parseInt(document.getElementById('edit_age').value) || s.age;
+    s.email = document.getElementById('edit_email').value;
+    s.phone = document.getElementById('edit_phone').value;
+    s.level = document.getElementById('edit_level').value;
+    s.course = document.getElementById('edit_course').value;
+    s.progress = parseInt(document.getElementById('edit_progress').value) || 0;
+    renderStudents();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Estudiant actualitzat correctament', 'success');
+}
+
+// Edit Course - full fields
+function editCourse(courseId) {
+    if (!currentUser || currentUser.type !== 'admin') return;
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return alert('Curs no trobat');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar curs</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveCourseEdit(event, ${courseId})" class="space-y-3">
+            <input type="text" id="course_name" value="${course.name || ''}" class="w-full border p-2 rounded" required/>
+            <textarea id="course_desc" class="w-full border p-2 rounded">${course.description || ''}</textarea>
+            <input type="number" id="course_duration" value="${course.duration || 1}" class="w-full border p-2 rounded" min="1"/>
+            <select id="course_level" class="w-full border p-2 rounded">
+                <option value="principiant" ${course.level==='principiant'?'selected':''}>Principiant</option>
+                <option value="intermig" ${course.level==='intermig'?'selected':''}>Intermig</option>
+                <option value="avançat" ${course.level==='avançat'?'selected':''}>Avançat</option>
+            </select>
+            <input type="number" id="course_price" value="${course.price || 0}" class="w-full border p-2 rounded" step="0.01" min="0"/>
+            <input type="text" id="course_instructor" value="${course.instructor || ''}" class="w-full border p-2 rounded"/>
+            <input type="date" id="course_start" value="${course.startDate || ''}" class="w-full border p-2 rounded"/>
+            <input type="date" id="course_end" value="${course.endDate || ''}" class="w-full border p-2 rounded"/>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
+}
+
+function saveCourseEdit(event, courseId) {
+    event.preventDefault();
+    const c = courses.find(c => c.id === courseId);
+    if (!c) return;
+    c.name = document.getElementById('course_name').value;
+    c.description = document.getElementById('course_desc').value;
+    c.duration = parseInt(document.getElementById('course_duration').value) || c.duration;
+    c.level = document.getElementById('course_level').value;
+    c.price = parseFloat(document.getElementById('course_price').value) || 0;
+    c.instructor = document.getElementById('course_instructor').value;
+    c.startDate = document.getElementById('course_start').value;
+    c.endDate = document.getElementById('course_end').value;
+    renderCourses();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Curs actualitzat correctament', 'success');
+}
+
+// Edit Professor - full fields (admin) or professor editing own profile
+function editProfessor(professorId) {
+    // allow admin or the professor themselves
+    const prof = (typeof professors !== 'undefined') ? professors.find(p => p.id === professorId) : null;
+    if (!prof) return alert('Professor no trobat');
+    if (!(currentUser && (currentUser.type === 'admin' || (currentUser.type === 'professor' && currentUser.name === prof.name)))) return alert('No tens permisos');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar professor</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveProfessorEdit(event, ${professorId})" class="space-y-3">
+            <input type="text" id="prof_name" value="${prof.name || ''}" class="w-full border p-2 rounded" required/>
+            <input type="email" id="prof_email" value="${prof.email || ''}" class="w-full border p-2 rounded"/>
+            <input type="text" id="prof_course_assigned" value="${prof.courseAssigned || ''}" class="w-full border p-2 rounded"/>
+            <textarea id="prof_bio" class="w-full border p-2 rounded">${prof.bio || ''}</textarea>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
+}
+
+function saveProfessorEdit(event, professorId) {
+    event.preventDefault();
+    const p = professors.find(p => p.id === professorId);
+    if (!p) return;
+    p.name = document.getElementById('prof_name').value;
+    p.email = document.getElementById('prof_email').value;
+    p.courseAssigned = document.getElementById('prof_course_assigned').value;
+    p.bio = document.getElementById('prof_bio').value;
+    renderProfessors();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Professor actualitzat correctament', 'success');
+}
+
+// Edit Group - full fields
+function editGroup(groupId) {
+    if (!currentUser || currentUser.type !== 'admin') return;
+    const g = groups.find(g => g.id === groupId);
+    if (!g) return alert('Grup no trobat');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar grup</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveGroupEdit(event, ${groupId})" class="space-y-3">
+            <input type="text" id="group_name" value="${g.name || ''}" class="w-full border p-2 rounded" required/>
+            <textarea id="group_desc" class="w-full border p-2 rounded">${g.description || ''}</textarea>
+            <select id="group_prof" class="w-full border p-2 rounded">
+                <option value="">-- Selecciona professor --</option>
+                ${ (typeof professors !== 'undefined' ? professors : []).map(pr=>`<option value="${pr.name}" ${g.professor===pr.name?'selected':''}>${pr.name}</option>`).join('') }
+            </select>
+            <div id="group_students_list" class="max-h-40 overflow-y-auto border p-2 rounded">
+                ${students.map(st=>`<label class="block"><input type="checkbox" name="group_student" value="${st.id}" ${g.students && g.students.includes(st.id)?'checked':''}/> ${st.name}</label>`).join('')}
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
+}
+
+function saveGroupEdit(event, groupId) {
+    event.preventDefault();
+    const g = groups.find(g => g.id === groupId);
+    if (!g) return;
+    g.name = document.getElementById('group_name').value;
+    g.description = document.getElementById('group_desc').value;
+    g.professor = document.getElementById('group_prof').value;
+    const checked = Array.from(event.target.querySelectorAll('input[name="group_student"]:checked')).map(i=>parseInt(i.value));
+    g.students = checked;
+    renderGroups();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Grup actualitzat correctament', 'success');
+}
+
+// Edit Task - admin or task owner (professor)
+function editTask(taskId) {
     const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    if (currentUser.type !== 'admin' && !(currentUser.type === 'professor' && task.professor === currentUser.name)) return;
-    if (confirm("Segur que vols eliminar aquesta tasca?")) {
-        tasks = tasks.filter(t => t.id !== taskId);
-        renderProfessorGroups();
-        showNotification("Tasca eliminada correctament", "success");
-    }
+    if (!task) return alert('Tasca no trobada');
+    if (!(currentUser && (currentUser.type === 'admin' || (currentUser.type === 'professor' && task.professor === currentUser.name)))) return alert('No tens permisos per editar aquesta tasca');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar tasca</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveTaskEdit(event, ${taskId})" class="space-y-3">
+            <input type="text" id="task_title" value="${task.title || ''}" class="w-full border p-2 rounded" required/>
+            <textarea id="task_desc" class="w-full border p-2 rounded">${task.description || ''}</textarea>
+            <input type="date" id="task_due" value="${task.dueDate || ''}" class="w-full border p-2 rounded"/>
+            <select id="task_group" class="w-full border p-2 rounded">
+                <option value="">-- Selecciona grup --</option>
+                ${groups.map(gr=>`<option value="${gr.name}" ${task.group===gr.name?'selected':''}>${gr.name}</option>`).join('')}
+            </select>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
 }
 
-// Eliminar avaluació
-function deleteEvaluation(evaluationIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquesta avaluació?")) {
-        evaluations.splice(evaluationIndex, 1);
-        renderEvaluations();
-        showNotification("Avaluació eliminada correctament", "success");
-    }
+function saveTaskEdit(event, taskId) {
+    event.preventDefault();
+    const t = tasks.find(t => t.id === taskId);
+    if (!t) return;
+    t.title = document.getElementById('task_title').value;
+    t.description = document.getElementById('task_desc').value;
+    t.dueDate = document.getElementById('task_due').value;
+    t.group = document.getElementById('task_group').value;
+    renderProfessorGroups();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Tasca actualitzada correctament', 'success');
 }
 
-// Eliminar pagament
-function deletePayment(paymentIndex) {
-    if (currentUser.type !== 'admin') return;
-    if (confirm("Segur que vols eliminar aquest pagament?")) {
-        payments.splice(paymentIndex, 1);
-        renderPayments();
-        showNotification("Pagament eliminat correctament", "success");
-    }
+// Edit Evaluation (notes) - admin or professor (prof can edit notes he created)
+function editEvaluation(index) {
+    const ev = evaluations[index];
+    if (!ev) return alert('Avaluació no trobada');
+    if (!(currentUser && (currentUser.type === 'admin' || currentUser.type === 'professor'))) return alert('No tens permisos');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar avaluació</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveEvaluationEdit(event, ${index})" class="space-y-3">
+            <select id="eval_student" class="w-full border p-2 rounded">
+                ${students.map(s=>`<option value="${s.id}" ${ev.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}
+            </select>
+            <select id="eval_course" class="w-full border p-2 rounded">
+                ${courses.map(c=>`<option value="${c.id}" ${ev.courseId===c.id?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+            <select id="eval_type" class="w-full border p-2 rounded">
+                <option value="Examen" ${ev.type==='Examen'?'selected':''}>Examen</option>
+                <option value="Pràctica" ${ev.type==='Pràctica'?'selected':''}>Pràctica</option>
+                <option value="Projecte" ${ev.type==='Projecte'?'selected':''}>Projecte</option>
+                <option value="Participació" ${ev.type==='Participació'?'selected':''}>Participació</option>
+            </select>
+            <input type="number" id="eval_score" value="${ev.score || 0}" class="w-full border p-2 rounded" min="0" max="10" step="0.1"/>
+            <textarea id="eval_comments" class="w-full border p-2 rounded">${ev.comments || ev.comments === undefined ? ev.comments : ''}</textarea>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
 }
 
+function saveEvaluationEdit(event, index) {
+    event.preventDefault();
+    const ev = evaluations[index];
+    if (!ev) return;
+    ev.studentId = parseInt(document.getElementById('eval_student').value);
+    ev.courseId = parseInt(document.getElementById('eval_course').value);
+    ev.type = document.getElementById('eval_type').value;
+    ev.score = parseFloat(document.getElementById('eval_score').value);
+    ev.comments = document.getElementById('eval_comments').value;
+    renderEvaluations();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Avaluació actualitzada correctament', 'success');
+}
+
+// Edit Payment - admin only
+function editPayment(index) {
+    if (!currentUser || currentUser.type !== 'admin') return;
+    const pay = payments[index];
+    if (!pay) return alert('Pagament no trobat');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar pagament</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="savePaymentEdit(event, ${index})" class="space-y-3">
+            <select id="pay_student" class="w-full border p-2 rounded">
+                ${students.map(s=>`<option value="${s.id}" ${pay.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}
+            </select>
+            <select id="pay_course" class="w-full border p-2 rounded">
+                ${courses.map(c=>`<option value="${c.id}" ${pay.courseId===c.id?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+            <input type="number" id="pay_amount" value="${pay.amount || 0}" class="w-full border p-2 rounded" step="0.01"/>
+            <select id="pay_method" class="w-full border p-2 rounded">
+                <option value="Efectiu" ${pay.method==='Efectiu'?'selected':''}>Efectiu</option>
+                <option value="Targeta" ${pay.method==='Targeta'?'selected':''}>Targeta</option>
+                <option value="Transferència" ${pay.method==='Transferència'?'selected':''}>Transferència</option>
+                <option value="Bizum" ${pay.method==='Bizum'?'selected':''}>Bizum</option>
+            </select>
+            <input type="date" id="pay_date" value="${pay.date || ''}" class="w-full border p-2 rounded"/>
+            <select id="pay_status" class="w-full border p-2 rounded">
+                <option value="Pagat" ${pay.status==='Pagat'?'selected':''}>Pagat</option>
+                <option value="Pendents" ${pay.status==='Pendents'?'selected':''}>Pendents</option>
+            </select>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
+}
+
+function savePaymentEdit(event, index) {
+    event.preventDefault();
+    const pay = payments[index];
+    if (!pay) return;
+    pay.studentId = parseInt(document.getElementById('pay_student').value);
+    pay.courseId = parseInt(document.getElementById('pay_course').value);
+    pay.amount = parseFloat(document.getElementById('pay_amount').value) || 0;
+    pay.method = document.getElementById('pay_method').value;
+    pay.date = document.getElementById('pay_date').value;
+    pay.status = document.getElementById('pay_status').value;
+    renderPayments();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Pagament actualitzat correctament', 'success');
+}
+
+// Edit Schedule entry - admin or professor for their own entries
+function editScheduleEntry(entryId) {
+    const entry = schedule.find(s => s.id === entryId);
+    if (!entry) return alert('Entrada d\'horari no trobada');
+    if (!(currentUser && (currentUser.type === 'admin' || (currentUser.type === 'professor' && entry.instructor === currentUser.name)))) return alert('No tens permisos');
+    const html = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar Horari</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form onsubmit="saveScheduleEdit(event, ${entryId})" class="space-y-3">
+            <select id="sched_course" class="w-full border p-2 rounded">
+                ${courses.map(c=>`<option value="${c.name}" ${entry.course===c.name?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+            <select id="sched_day" class="w-full border p-2 rounded">
+                <option value="1" ${entry.day===1?'selected':''}>Dilluns</option>
+                <option value="2" ${entry.day===2?'selected':''}>Dimarts</option>
+                <option value="3" ${entry.day===3?'selected':''}>Dimecres</option>
+                <option value="4" ${entry.day===4?'selected':''}>Dijous</option>
+                <option value="5" ${entry.day===5?'selected':''}>Divendres</option>
+                <option value="6" ${entry.day===6?'selected':''}>Dissabte</option>
+                <option value="0" ${entry.day===0?'selected':''}>Diumenge</option>
+            </select>
+            <input type="time" id="sched_time" value="${entry.time || ''}" class="w-full border p-2 rounded"/>
+            <select id="sched_duration" class="w-full border p-2 rounded">
+                <option value="60" ${entry.duration===60?'selected':''}>60 minuts</option>
+                <option value="90" ${entry.duration===90?'selected':''}>90 minuts</option>
+                <option value="120" ${entry.duration===120?'selected':''}>120 minuts</option>
+            </select>
+            <input type="text" id="sched_room" value="${entry.room || ''}" class="w-full border p-2 rounded"/>
+            <input type="text" id="sched_instructor" value="${entry.instructor || ''}" class="w-full border p-2 rounded"/>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    openModal(html);
+}
+
+function saveScheduleEdit(event, entryId) {
+    event.preventDefault();
+    const e = schedule.find(s => s.id === entryId);
+    if (!e) return;
+    e.course = document.getElementById('sched_course').value;
+    e.day = parseInt(document.getElementById('sched_day').value);
+    e.time = document.getElementById('sched_time').value;
+    e.duration = parseInt(document.getElementById('sched_duration').value);
+    e.room = document.getElementById('sched_room').value;
+    e.instructor = document.getElementById('sched_instructor').value;
+    renderSchedule();
+    closeModal(event.target.closest('.modal'));
+    showNotification('Horari actualitzat correctament', 'success');
+}
+
+// Hook: expose edit functions to global (some renderers call editStudent etc.)
+window.editStudent = editStudent;
+window.editCourse = editCourse;
+window.editProfessor = editProfessor;
+window.editGroup = editGroup;
+window.editTask = editTask;
+window.editEvaluation = editEvaluation;
+window.editPayment = editPayment;
+window.editScheduleEntry = editScheduleEntry;
+
+function editProfessor(professorId) {
+    // Allow admin or the professor themselves to edit.
+    // Try to find professor object in 'professors' array by id.
+    let prof = (typeof professors !== 'undefined') ? professors.find(p => p.id === professorId) : null;
+    // If not found, maybe the system stores professors as users; try to find by id in users (if users have id) or by email/name.
+    if (!prof && typeof users !== 'undefined') {
+        // If professorId is actually an email or name string, try to match; otherwise if users have id fields, match by id.
+        if (typeof professorId === 'string') {
+            prof = users.find(u => u.type === 'professor' && (u.email === professorId || u.name === professorId)) || null;
+        } else {
+            // try numeric id match on professors array by id property or fallback to matching currentUser name
+            prof = users.find(u => u.type === 'professor' && u.name === currentUser?.name) || null;
+        }
+    }
+    // If still not found and currentUser is a professor, allow them to edit their own profile
+    if (!prof && currentUser && currentUser.type === 'professor') {
+        // try match by name/email
+        prof = (typeof professors !== 'undefined') ? professors.find(p => p.name === currentUser.name || p.email === currentUser.email) : null;
+        if (!prof) {
+            // perhaps professors are stored only as users; create a temp prof object from currentUser
+            prof = { id: Date.now(), name: currentUser.name, email: currentUser.email || '', courseAssigned: '', bio: '' };
+        }
+    }
+
+    if (!prof) return alert('Professor no trobat');
+
+    // Permission check: admin can edit anyone, professor can edit themselves
+    if (!(currentUser && (currentUser.type === 'admin' || (currentUser.type === 'professor' && currentUser.name === prof.name)))) {
+        return alert('No tens permisos');
+    }
+
+    const profIdForSave = prof.id || ('prof_' + Math.floor(Math.random()*1000000));
+    const htmlContent = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Editar professor</h3>
+            <button onclick="closeModal(this)" class="text-gray-400 hover:text-gray-600">×</button>
+        </div>
+        <form id="profEditForm" onsubmit="saveProfessorEdit(event, '${profIdForSave}')\" class="space-y-3">
+            <input type="text" id="prof_name_field" value="${prof.name || ''}" class="w-full border p-2 rounded" required/>
+            <input type="email" id="prof_email_field" value="${prof.email || ''}" class="w-full border p-2 rounded"/>
+            <input type="text" id="prof_course_assigned_field" value="${prof.courseAssigned || ''}" class="w-full border p-2 rounded"/>
+            <textarea id="prof_bio_field" class="w-full border p-2 rounded">${prof.bio || ''}</textarea>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeModal(this)" class="px-3 py-1 bg-gray-200 rounded">Cancel·lar</button>
+                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">Desar</button>
+            </div>
+        </form>
+    `;
+    const modal = openModal(htmlContent);
+
+    // Attach save handler that updates either professors array or users array as appropriate
+    window.saveProfessorEdit = function(event, professorIdParam) {
+        event.preventDefault();
+        // prefer updating professors array if exists, else update users array
+        const name = document.getElementById('prof_name_field').value;
+        const email = document.getElementById('prof_email_field').value;
+        const courseAssigned = document.getElementById('prof_course_assigned_field').value;
+        const bio = document.getElementById('prof_bio_field').value;
+        // try find in professors by id or name
+        if (typeof professors !== 'undefined') {
+            let p = professors.find(p => p.id === professorId || p.name === prof.name || p.email === prof.email);
+            if (p) {
+                p.name = name; p.email = email; p.courseAssigned = courseAssigned; p.bio = bio;
+            } else {
+                // if not found, add new professor entry
+                const newId = Date.now();
+                professors.push({ id: newId, name: name, email: email, courseAssigned: courseAssigned, bio: bio });
+            }
+            renderProfessors();
+        }
+        // also sync users array if there's a matching user
+        if (typeof users !== 'undefined') {
+            let u = users.find(u => u.type === 'professor' && (u.email === prof.email || u.name === prof.name));
+            if (u) {
+                u.name = name; u.email = email;
+            } else {
+                // optionally add to users
+                users.push({ email: email, password: 'changeme', type: 'professor', name: name });
+            }
+        }
+        closeModal(modal);
+        showNotification('Professor actualitzat correctament', 'success');
+    };
+}
 </script></body>
 </html>
